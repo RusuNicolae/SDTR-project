@@ -3,83 +3,113 @@
 #else
 #define ARDUINO_RUNNING_CORE 1
 #endif
-//#include<semphr.h>
-//#include<SoftwareSerial.h>
-#include<HardwareSerial.h>
-#ifndef SEMAPHORE_H
-#define SEMAPHORE_H
 
-#ifndef INC_FREERTOS_H
-  #error "include FreeRTOS.h" must appear in source files before "include semphr.h"
-#endif
+#define BLYNK_PRINT Serial
+#include <WiFi.h>
+#include <WiFiClient.h>
+#include <BlynkSimpleEsp32.h>
+BlynkTimer timer;
 
-#include "queue.h"
-//aici cred ca mai trebuie ceva
-#endif
+char auth[] = "2w9Ogu_8iYXR8xB8Qu5S5JIQGxom7A_-";
 
-TaskHandle_t Task1;
-TaskHandle_t Task2;
-TaskHandle_t Task3;
+char ssid[] = "DIGI_0afd08";
+char pass[] = "aa21f502";
 
 const int led1 = 16;
 const int led2 = 17;
 const int MQ2 = 34;
 
-void Task_ReadFromSensor(void *pvParameters);
-void Led(void *pvParameters);
-void Taskprint( void *pvParameters );
-
-SemaphoreHandle_t xSerialSemaphore;
+void Task1code( void * pvParameters );
+void Task2code( void * pvParameters );
+void Task3code( void * pvParameters );
 
 void setup() {
+  
+  Serial.begin(115200);
+  Blynk.begin(auth, ssid, pass);
   pinMode(led1, OUTPUT);
   pinMode(led2, OUTPUT);
   pinMode(MQ2, INPUT);
+//  timer.setInterval(1000L, sendUptime);
 
-while (!Serial) {
-    ; // wait for serial port to connect
-  }
+ xTaskCreatePinnedToCore(
+                    Task1code,  
+                    "Task1",    
+                    1024,       
+                    NULL,       
+                    2,          
+                    NULL,     
+                    ARDUINO_RUNNING_CORE);                           
+  vTaskDelay(500); 
 
+  xTaskCreatePinnedToCore(
+                    Task2code,   
+                    "Task2",     
+                    1024,       
+                    NULL,        
+                    2,           
+                    NULL,      
+                    ARDUINO_RUNNING_CORE);          
+  vTaskDelay(500); 
+    
+  xTaskCreatePinnedToCore(
+                    Task3code,
+                    "Task3",
+                    1024,  
+                    NULL,
+                    3,  
+                    NULL,
+                    ARDUINO_RUNNING_CORE);
 
-   if (xSerialSemaphore == NULL){
-    xSerialSemaphore = xSemaphoreCreateMutex();
-    if ((xSerialSemaphore) != NULL)
-    xSemaphoreGive((xSerialSemaphore));
-    }
-   
- xTaskCreate(
-    Task_ReadFromSensor
-    , "Sensor"
-    , 100
-    , NULL
-    , 1 //prioritate
-    , NULL
-    );
-
-  xTaskCreate(
-    Led
-    , "Led"
-    , 128
-    , NULL
-    , 1
-    , NULL
-    );
-vTaskStartScheduler();
+  vTaskDelay(500); 
 }
-void loop() 
-{ 
+
+void loop()
+{  
 }
-void Task_ReadFromSensor(void *pvParameters)
+
+void Task1code(void *pvParameters)  
 {
-  while(1){
-   
-  int sensorReading = analogRead(MQ2); 
+  (void) pvParameters;
+  pinMode(led1, OUTPUT);
 
-  if (sensorReading > 2000)
+  for (;;) 
   {
-    if (xSemaphoreTake (xSerialSemaphore, (TickType_t) 10) == pdTRUE){
-     
- digitalWrite(led1, LOW);
+    digitalWrite(led1, HIGH);   
+    vTaskDelay(1000);   
+    digitalWrite(led1, LOW);    
+    vTaskDelay(1000);  
+  }
+}
+
+void Task2code(void *pvParameters)  
+{
+  (void) pvParameters;
+  pinMode(led2, OUTPUT);
+
+  for (;;) 
+  {
+    digitalWrite(led2, HIGH);   
+    vTaskDelay(1000);  
+    digitalWrite(led2, LOW);    
+    vTaskDelay(1000);  
+  }
+}
+
+void Task3code(void *pvParameters)  
+{
+  (void) pvParameters;
+
+for (;;)
+  {
+int sensorValueA3 = analogRead(MQ2);
+//  Blynk.virtualWrite(V1, sensorValueA3);
+    Serial.println(sensorValueA3);
+    vTaskDelay(10);
+  if (sensorValueA3 > 2200)
+  {
+//   Blynk.notify("Gas Detected!");
+    digitalWrite(led1, LOW);
     digitalWrite(led2, HIGH);
   }
 
@@ -88,41 +118,5 @@ void Task_ReadFromSensor(void *pvParameters)
     digitalWrite(led1, HIGH);
     digitalWrite(led2, LOW);
   }
-
-    }     
-
-      xSemaphoreGive(xSerialSemaphore);
-  
-   vTaskDelay(1);
   }
 }
-void Led(void *pvParameters)  
-{
-  pinMode(17, OUTPUT);
-  while(1)
-  {
-    if (xSemaphoreTake (xSerialSemaphore, (TickType_t) 5) == pdTRUE){
-     Serial.println("LED aprins-stins (blink)");
-    }
-     digitalWrite(17, HIGH);   
-     vTaskDelay( 300 / portTICK_PERIOD_MS ); 
-     digitalWrite(17, LOW);   
-     vTaskDelay( 300 / portTICK_PERIOD_MS ); 
-     xSemaphoreGive(xSerialSemaphore);
- 
-    vTaskDelay(1);
-}
-}
-
-void Taskprint(void *pvParameters)  {
-  int counter = 0;
-  while(1)
-  {
-    if (xSemaphoreTake (xSerialSemaphore, (TickType_t) 5) == pdTRUE){
-  counter++;
-  Serial.println(counter); 
-    }
-  xSemaphoreGive(xSerialSemaphore);
-  vTaskDelay(500 / portTICK_PERIOD_MS);    
-}
-  vTaskDelay(1);}
