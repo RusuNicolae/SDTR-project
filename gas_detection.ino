@@ -10,7 +10,9 @@
 #include <BlynkSimpleEsp32.h>
 BlynkTimer timer;
 
-char auth[] = "2w9Ogu_8iYXR8xB8Qu5S5JIQGxom7A_-";
+//char auth[] = "2w9Ogu_8iYXR8xB8Qu5S5JIQGxom7A_-";
+char auth[] = "HmjJ7MVLfcpCdEl9-TwEiFVn0qsWpKE7";
+
 
 char ssid[] = "DIGI_0afd08";
 char pass[] = "aa21f502";
@@ -47,7 +49,7 @@ void setup() {
                     "Task1",    
                     1024,       
                     NULL,       
-                    2,          
+                    1,          
                     NULL,     
                     ARDUINO_RUNNING_CORE);                           
   vTaskDelay(500); 
@@ -57,7 +59,7 @@ void setup() {
                     "Task2",     
                     1024,       
                     NULL,        
-                    2,           
+                    1,           
                     NULL,      
                     ARDUINO_RUNNING_CORE);          
   vTaskDelay(500); 
@@ -65,9 +67,9 @@ void setup() {
   xTaskCreatePinnedToCore(
                     Task3code,
                     "Task3",
-                    1024,  
+                    10000,  
                     NULL,
-                    3,  
+                    2,  
                     NULL,
                     ARDUINO_RUNNING_CORE);
 
@@ -86,15 +88,15 @@ void Task1code(void *pvParameters)
   while(1)
   {
   if (xSemaphoreTake (xSerialSemaphore, (TickType_t) 5) == pdTRUE){
-//     Serial.println("LED verde aprins ");
+     Serial.println("LED verde aprins ");
     }
     digitalWrite(led1, HIGH);   
-    vTaskDelay( 300 / portTICK_PERIOD_MS );    
+    vTaskDelay( 1000 / portTICK_PERIOD_MS );    
     digitalWrite(led1, LOW);    
-    vTaskDelay( 300 / portTICK_PERIOD_MS );  
+    vTaskDelay( 1000 / portTICK_PERIOD_MS );  
     xSemaphoreGive(xSerialSemaphore);
  
-    vTaskDelay(1);
+    vTaskDelay(10);
 }
 }
 
@@ -106,14 +108,14 @@ void Task2code(void *pvParameters)
   while(1)
   {
     if (xSemaphoreTake (xSerialSemaphore, (TickType_t) 5) == pdTRUE){
-//     Serial.println("LED rosu aprins ");
+     Serial.println("LED rosu aprins ");
     }
     digitalWrite(led2, HIGH);   
-    vTaskDelay( 300 / portTICK_PERIOD_MS );  
+    vTaskDelay( 1000 / portTICK_PERIOD_MS );  
     digitalWrite(led2, LOW);    
-    vTaskDelay( 300 / portTICK_PERIOD_MS ); 
+    vTaskDelay( 1000 / portTICK_PERIOD_MS ); 
     xSemaphoreGive(xSerialSemaphore);
-    vTaskDelay(1); 
+    vTaskDelay(10); 
   }
 }
 
@@ -122,13 +124,13 @@ void Task3code(void *pvParameters)
   (void) pvParameters;
 
 while(1){
-    int sensorValueA3 = analogRead(MQ2);
-//  Blynk.virtualWrite(V1, sensorValueA3);
-    Serial.println(sensorValueA3);
-  if (sensorValueA3 > 2200)
+  int sensorValueA3 = analogRead(MQ2);
+  Blynk.virtualWrite(V1, sensorValueA3);
+  Serial.println(sensorValueA3);
+  if (sensorValueA3 > 1750)
   {
 //  if (xSemaphoreTake (xSerialSemaphore, (TickType_t) 10) == pdTRUE){
-//  Blynk.notify("Gas Detected!");
+  Blynk.notify("Gas Detected!");
     digitalWrite(led1, LOW);
     digitalWrite(led2, HIGH);
   }
@@ -141,5 +143,5 @@ while(1){
   }
 //        xSemaphoreGive(xSerialSemaphore);
   
-   vTaskDelay(1);
+   vTaskDelay(10);
 }
