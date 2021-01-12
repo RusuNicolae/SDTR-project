@@ -4,6 +4,11 @@
 #define ARDUINO_RUNNING_CORE 1
 #endif
 
+#include<HardwareSerial.h>
+#define SEMAPHORE_H
+#ifndef INC_FREERTOS_H
+#endif
+
 #define BLYNK_PRINT Serial
 #include <WiFi.h>
 #include <WiFiClient.h>
@@ -34,7 +39,7 @@ void setup() {
   pinMode(led1, OUTPUT);
   pinMode(led2, OUTPUT);
   pinMode(MQ2, INPUT);
-//  timer.setInterval(1000L, sendUptime);
+
   while (!Serial) {
     ; // wait for serial port to connect
   } 
@@ -52,7 +57,7 @@ void setup() {
                     1,          
                     NULL,     
                     ARDUINO_RUNNING_CORE);                           
-  vTaskDelay(500); 
+//  vTaskDelay(500); 
 
   xTaskCreatePinnedToCore(
                     Task2code,   
@@ -62,7 +67,7 @@ void setup() {
                     1,           
                     NULL,      
                     ARDUINO_RUNNING_CORE);          
-  vTaskDelay(500); 
+//  vTaskDelay(500); 
     
   xTaskCreatePinnedToCore(
                     Task3code,
@@ -73,7 +78,7 @@ void setup() {
                     NULL,
                     ARDUINO_RUNNING_CORE);
 
-  vTaskDelay(500); 
+//  vTaskDelay(500); 
 }
 
 void loop()
@@ -88,12 +93,14 @@ void Task1code(void *pvParameters)
   while(1)
   {
   if (xSemaphoreTake (xSerialSemaphore, (TickType_t) 5) == pdTRUE){
-     Serial.println("LED verde aprins ");
-    }
+
+    
+    Serial.println("LED verde aprins ");
     digitalWrite(led1, HIGH);   
     vTaskDelay( 1000 / portTICK_PERIOD_MS );    
     digitalWrite(led1, LOW);    
     vTaskDelay( 1000 / portTICK_PERIOD_MS );  
+  }
     xSemaphoreGive(xSerialSemaphore);
  
     vTaskDelay(10);
@@ -108,12 +115,12 @@ void Task2code(void *pvParameters)
   while(1)
   {
     if (xSemaphoreTake (xSerialSemaphore, (TickType_t) 5) == pdTRUE){
-     Serial.println("LED rosu aprins ");
-    }
+    Serial.println("LED rosu aprins ");
     digitalWrite(led2, HIGH);   
-    vTaskDelay( 1000 / portTICK_PERIOD_MS );  
+    vTaskDelay( 700 / portTICK_PERIOD_MS );  
     digitalWrite(led2, LOW);    
-    vTaskDelay( 1000 / portTICK_PERIOD_MS ); 
+    vTaskDelay( 700 / portTICK_PERIOD_MS ); 
+  }
     xSemaphoreGive(xSerialSemaphore);
     vTaskDelay(10); 
   }
@@ -127,7 +134,8 @@ while(1){
   int sensorValueA3 = analogRead(MQ2);
   Blynk.virtualWrite(V1, sensorValueA3);
   Serial.println(sensorValueA3);
-  if (sensorValueA3 > 1750)
+  if (xSemaphoreTake (xSerialSemaphore, (TickType_t) 10) == pdTRUE){
+  if (sensorValueA3 > 2050)
   {
 //  if (xSemaphoreTake (xSerialSemaphore, (TickType_t) 10) == pdTRUE){
   Blynk.notify("Gas Detected!");
@@ -142,6 +150,7 @@ while(1){
   }
   }
 //        xSemaphoreGive(xSerialSemaphore);
-  
-   vTaskDelay(10);
+      xSemaphoreGive(xSerialSemaphore);
+   vTaskDelay(1);
+}
 }
